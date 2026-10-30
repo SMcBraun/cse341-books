@@ -10,7 +10,9 @@
  * LEARNING GAP: In CSE 340, one file often did everything
  *   (built the app AND started it). Here the job is split into
  *   two files: app.js = the restaurant, server.js = opening
- *   the doors.
+ *   the doors. (W01 MongoDB practice: a temporary GET /trails
+ *   route was added here to prove the database connection
+ *   worked, then removed. The books routes go here next.)
  * ========================================================== */
 
 /* ----------------------------------------------------------

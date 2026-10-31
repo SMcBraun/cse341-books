@@ -1,88 +1,30 @@
 /* ==========================================================
- * app.js — The Express application (the "restaurant")
- * ----------------------------------------------------------
- * PLAIN ENGLISH: This file builds the app — its settings and
- *   its routes (the "menu"). It does NOT start the server.
- * LOGIC: Create the app → add middleware → add routes → export
- *   it so server.js (and later, tests) can use it.
- * WHY WE NEED IT: Keeping the app separate from the server
- *   startup lets tests load the app without opening a real port.
- * LEARNING GAP: In CSE 340, one file often did everything
- *   (built the app AND started it). Here the job is split into
- *   two files: app.js = the restaurant, server.js = opening
- *   the doors. (W01 MongoDB practice: a temporary GET /trails
- *   route was added here to prove the database connection
- *   worked, then removed. The books routes go here next.)
+ * app.js — The Express application
+ * PLAIN ENGLISH: Builds the app: JSON middleware, the root
+ *   health-check route, and the API routes from src/router.js.
+ * LOGIC: Create app → express.json() → GET / → app.use(router)
+ *   → export (server.js starts it).
+ * WHY WE NEED IT: One central place that assembles the app.
+ * LEARNING GAP: getDb is NOT imported here. Only models talk to
+ *   the database. The practice /trails route was removed.
  * ========================================================== */
-
-/* ----------------------------------------------------------
- * Import Express
- * PLAIN ENGLISH: Bring in the Express toolkit we installed
- *   with npm.
- * LOGIC: "import ... from 'express'" loads the package from
- *   node_modules.
- * WHY WE NEED IT: Express handles requests, routes, and
- *   responses so we don't have to build that from scratch.
- * LEARNING GAP: "import" only works because package.json has
- *   "type": "module". With "commonjs" you would need
- *   require('express') instead.
- * ---------------------------------------------------------- */
 import express from 'express';
+import router from './src/router.js';
 
-/* ----------------------------------------------------------
- * Create the Express application
- * PLAIN ENGLISH: Make our app — one "restaurant" instance.
- * LOGIC: Calling express() returns a new app object that we
- *   attach settings and routes to.
- * WHY WE NEED IT: Everything else (middleware, routes) gets
- *   added to this "app" object.
- * LEARNING GAP: "express" (the toolkit) and "app" (our one
- *   restaurant built with it) are different things.
- * ---------------------------------------------------------- */
 const app = express();
 
-/* ----------------------------------------------------------
- * JSON request body middleware
- * PLAIN ENGLISH: Teach the app to read JSON that clients send
- *   to us.
- * LOGIC: express.json() runs on every incoming request. If the
- *   body is JSON, it turns it into a JavaScript object at
- *   req.body.
- * WHY WE NEED IT: Later, POST and PUT requests will send book
- *   data as JSON. Without this, req.body would be undefined.
- * LEARNING GAP: "Middleware" = a checkpoint every request
- *   passes through before reaching a route — like intake at
- *   a doctor's office before seeing the provider.
- * ---------------------------------------------------------- */
+/* PLAIN ENGLISH: Read JSON sent in request bodies (req.body). */
 app.use(express.json());
 
-/* ----------------------------------------------------------
- * Root route: GET /
- * PLAIN ENGLISH: When someone visits the home address ("/"),
- *   send back a short JSON message saying the server works.
- * LOGIC: app.get('/', ...) matches GET requests to "/".
- *   res.status(200) sets "OK", and .json({...}) sends data
- *   as JSON.
- * WHY WE NEED IT: It's a quick health check — if you see this
- *   message, the server is running.
- * LEARNING GAP: In CSE 340 you used res.render() to send an
- *   HTML page. In web services we use res.json() to send DATA.
- *   "return" makes sure nothing else runs after the response.
- *   It's a course standard, and ESLint flags it if missing
- *   (the W01 lint test proved this).
- * ---------------------------------------------------------- */
+/* PLAIN ENGLISH: Health check, so "/" confirms the server is up.
+ * LEARNING GAP: "return" before the response (course standard). */
 app.get('/', (req, res) => {
-    return res.status(200).json({ message: 'Server is running' });
+  return res.status(200).json({ message: 'Server is running' });
 });
 
-/* ----------------------------------------------------------
- * Export the app
- * PLAIN ENGLISH: Make this app available to other files.
- * LOGIC: "export default app" lets server.js write
- *   "import app from './app.js'".
- * WHY WE NEED IT: server.js needs the app to start it, and
- *   future tests will import it too.
- * LEARNING GAP: Without this export, server.js would have
- *   nothing to import and would crash.
- * ---------------------------------------------------------- */
+/* PLAIN ENGLISH: Plug in all API routes (like GET /books).
+ * LEARNING GAP: router has no () here. We hand Express the
+ *   router itself, the same idea as passing handler names. */
+app.use(router);
+
 export default app;

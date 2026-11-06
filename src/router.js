@@ -10,6 +10,13 @@
 import express from 'express';
 import { getBooksHandler, getBookByIdHandler } from './controllers/books.js';
 
+/* PLAIN ENGLISH: Bring in the author controller function.
+ * LOGIC: getAuthorsHandler lives in src/controllers/authors.js.
+ * WHY WE NEED IT: The GET /authors route below needs it.
+ * LEARNING GAP: The path starts with "./" because router.js and
+ *   the controllers folder are both inside src. */
+import { getAuthorsHandler } from './controllers/authors.js';
+
 const router = express.Router();
 
 /* ----------------------------------------------------------
@@ -76,5 +83,31 @@ router.get('/books', getBooksHandler);
  *         description: Unable to retrieve book
  */
 router.get('/books/:id', getBookByIdHandler);
+
+/* ----------------------------------------------------------
+ * GET /authors → return all authors as JSON
+ * PLAIN ENGLISH: When someone visits /authors, send back every
+ *   author (a1, a2, a3 from the Atlas "authors" collection).
+ * LOGIC: Runs getAuthorsHandler, which returns 200 + the
+ *   authors, or 500 if something breaks.
+ * WHY WE NEED IT: The "Get All Authors" route, and the first
+ *   route built end to end for issue #9.
+ * LEARNING GAP: The "Authors" tag makes Swagger show a separate
+ *   Authors section, apart from Books.
+ * ---------------------------------------------------------- */
+/**
+ * @openapi
+ * /authors:
+ *   get:
+ *     summary: Get all authors
+ *     tags:
+ *       - Authors
+ *     responses:
+ *       200:
+ *         description: A list of authors
+ *       500:
+ *         description: Unable to retrieve authors
+ */
+router.get('/authors', getAuthorsHandler);
 
 export default router;

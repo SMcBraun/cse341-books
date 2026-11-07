@@ -8,13 +8,23 @@
  *   it later when a request arrives.
  * ========================================================== */
 import express from 'express';
-import { getBooksHandler, getBookByIdHandler } from './controllers/books.js';
+
+/* PLAIN ENGLISH: Bring in all 5 book controller functions.
+ * LOGIC: They live in src/controllers/books.js.
+ * WHY WE NEED IT: Each book route below calls one of them.
+ * LEARNING GAP: The path starts with "./" because router.js and
+ *   the controllers folder are both inside src. */
+import {
+  getBooksHandler,
+  getBookByIdHandler,
+  createBookHandler,
+  updateBookHandler,
+  deleteBookHandler,
+} from './controllers/books.js';
 
 /* PLAIN ENGLISH: Bring in all 5 author controller functions.
  * LOGIC: They live in src/controllers/authors.js.
- * WHY WE NEED IT: Each author route below calls one of them.
- * LEARNING GAP: The path starts with "./" because router.js and
- *   the controllers folder are both inside src. */
+ * WHY WE NEED IT: Each author route below calls one of them. */
 import {
   getAuthorsHandler,
   getAuthorByIdHandler,
@@ -44,7 +54,7 @@ const router = express.Router();
  *       - Books
  *     responses:
  *       200:
- *         description: Books returned successfully
+ *         description: Books returned successfully, each with an authorId
  *       500:
  *         description: Unable to retrieve books
  */
@@ -63,8 +73,6 @@ router.get('/books', getBooksHandler);
  *   - In Express the route says /books/:id, but in the @openapi
  *     comment it's written /books/{id}. Same meaning, different
  *     style, because OpenAPI uses curly braces.
- *   - The "parameters" section tells Swagger to show a box
- *     where you type the id.
  * ---------------------------------------------------------- */
 /**
  * @openapi
@@ -91,13 +99,152 @@ router.get('/books', getBooksHandler);
 router.get('/books/:id', getBookByIdHandler);
 
 /* ----------------------------------------------------------
+ * POST /books → create a new book
+ * PLAIN ENGLISH: Send a new book's id, authorId, title, and
+ *   publicationDate, and the API saves it.
+ * LOGIC: Runs createBookHandler → 201, 400, or 500.
+ * WHY WE NEED IT: The "Create Book" write route.
+ * LEARNING GAP: authorId must match a real author (a1, a2, a3),
+ *   or the API returns 400.
+ * ---------------------------------------------------------- */
+/**
+ * @openapi
+ * /books:
+ *   post:
+ *     summary: Create a book
+ *     tags:
+ *       - Books
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - authorId
+ *               - title
+ *               - publicationDate
+ *             properties:
+ *               id:
+ *                 type: string
+ *               authorId:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               publicationDate:
+ *                 type: string
+ *                 description: Date in YYYY-MM-DD format
+ *           example:
+ *             id: b4
+ *             authorId: a1
+ *             title: Example Book Title
+ *             publicationDate: '2026-01-15'
+ *     responses:
+ *       201:
+ *         description: Book created
+ *       400:
+ *         description: Missing or invalid book fields, book id already exists, or author not found for the given authorId
+ *       500:
+ *         description: Unable to create book
+ */
+router.post('/books', createBookHandler);
+
+/* ----------------------------------------------------------
+ * PUT /books/:id → update an existing book
+ * PLAIN ENGLISH: Send a new authorId, title, and
+ *   publicationDate for a book, and the API updates it.
+ * LOGIC: Runs updateBookHandler → 200, 400, 404, or 500.
+ * WHY WE NEED IT: The "Update Book" write route.
+ * LEARNING GAP: The id goes in the URL box, NOT in the JSON
+ *   body. That's why the example body has no id.
+ * ---------------------------------------------------------- */
+/**
+ * @openapi
+ * /books/{id}:
+ *   put:
+ *     summary: Update a book by id
+ *     tags:
+ *       - Books
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The custom book id, such as b1
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - authorId
+ *               - title
+ *               - publicationDate
+ *             properties:
+ *               authorId:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               publicationDate:
+ *                 type: string
+ *                 description: Date in YYYY-MM-DD format
+ *           example:
+ *             authorId: a2
+ *             title: Updated Book Title
+ *             publicationDate: '2026-02-20'
+ *     responses:
+ *       200:
+ *         description: Book updated
+ *       400:
+ *         description: Missing or invalid book fields, or author not found for the given authorId
+ *       404:
+ *         description: Book not found
+ *       500:
+ *         description: Unable to update book
+ */
+router.put('/books/:id', updateBookHandler);
+
+/* ----------------------------------------------------------
+ * DELETE /books/:id → delete a book
+ * PLAIN ENGLISH: Remove one book by its id.
+ * LOGIC: Runs deleteBookHandler → 204, 404, or 500.
+ * WHY WE NEED IT: The "Delete Book" write route.
+ * LEARNING GAP: Deleting a book never deletes its author.
+ * ---------------------------------------------------------- */
+/**
+ * @openapi
+ * /books/{id}:
+ *   delete:
+ *     summary: Delete a book by id
+ *     tags:
+ *       - Books
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The custom book id, such as b1
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Book deleted
+ *       404:
+ *         description: Book not found
+ *       500:
+ *         description: Unable to delete book
+ */
+router.delete('/books/:id', deleteBookHandler);
+
+/* ----------------------------------------------------------
  * GET /authors → return all authors as JSON
  * PLAIN ENGLISH: When someone visits /authors, send back every
  *   author (a1, a2, a3 from the Atlas "authors" collection).
  * LOGIC: Runs getAuthorsHandler, which returns 200 + the
  *   authors, or 500 if something breaks.
- * WHY WE NEED IT: The "Get All Authors" route, and the first
- *   route built end to end for issue #9.
+ * WHY WE NEED IT: The "Get All Authors" route.
  * LEARNING GAP: The "Authors" tag makes Swagger show a separate
  *   Authors section, apart from Books.
  * ---------------------------------------------------------- */
